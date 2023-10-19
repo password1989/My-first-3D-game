@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+# Emitted when the player was hit by a mob.
+# Put this at the top of the script.
+signal hit
+
 # How fast the player moves in meters per second.
 @export var speed = 14
 # The downward acceleration when in the air, in meters per second squared.
@@ -38,16 +42,9 @@ func _physics_process(delta):
 	# Vertical Velocity
 	if not is_on_floor(): # If in the air, fall towards the floor. Literally gravity
 		target_velocity.y = target_velocity.y - (fall_acceleration * delta)
-
-	# Moving the Character
-	velocity = target_velocity
-	
 	# Jumping.
 	if is_on_floor() and Input.is_action_just_pressed("jump"):
 		target_velocity.y = jump_impulse
-		
-	
-	move_and_slide()
 	
 	# Iterate through all collisions that occurred this frame
 	for index in range(get_slide_collision_count()):   
@@ -65,3 +62,15 @@ func _physics_process(delta):
 			# If so, we squash it and bounce.
 				mob.squash()
 			target_velocity.y = bounce_impulse
+	
+	# Moving the Character
+	velocity = target_velocity
+	move_and_slide()
+
+# And this function at the bottom.
+func die():
+	hit.emit()
+	queue_free()
+	
+func _on_mob_detector_body_entered(body):
+	die()
